@@ -8,7 +8,6 @@ nest_asyncio.apply()
 # __import__('IPython').embed()
 
 
-i = 0
 timeout = aiohttp.ClientTimeout(total=5)
 payload = {'authorization': 'test'}
 
@@ -20,8 +19,10 @@ class ProxyChecker():
 
 
     async def begin_checking(self):
-        tasks = (self.check_proxy(proxy, self.proxyType) for proxy in self.proxyList)
+        tasks = (self.check_proxy(proxy, self.proxyType, self.proxyList.index(proxy)) for proxy in self.proxyList)
         self.loop.run_until_complete(asyncio.gather(*tasks))
+
+
         #tasks = (self.loop.run_until_complete(self.__async__check_proxy(proxy, self.proxyType)) for proxy in self.proxyList)
         #return asyncio.gather(*tasks, return_exceptions=True)
 
@@ -51,15 +52,13 @@ class ProxyChecker():
                 self.proxies.remove(proxy)
         
 
-    async def check_proxy(self, proxy, proxyType):
-        global i
-        i += 1
+    async def check_proxy(self, proxy, proxyType, i):
         print(i)
         connector = ProxyConnector.from_url("{}://{}".format(proxyType, proxy))
         async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
             responseJSON=""
             try:
-                async with session.get('https://discord.com/api/v8/experiments') as response:
+                async with session.post('https://discord.com/api/v8/register', json=payload) as response:
                     while True:
                         status_code = response.status
                         try:
@@ -69,17 +68,17 @@ class ProxyChecker():
                             continue
                         else:
                             responseJSON = responseJSON + responseJSONpart.decode('utf-8')
-                            print(responseJSON)
+                            print(response.status)
                             break
                         
-                        print(responseJSON)
+                        print(response.status)
                         break
             except Exception as e:
                 result = get_full_class_name(e)
                 if result == "proxy_socks._errors.ProxyConnectionError":
                     print("Failed proxy: {}".format(proxy))
                 elif result == "asyncio.exceptions.TimeoutError":
-                    print("timed out.")
+                    print("timed out. #{}".format(i))
 
 
 def get_full_class_name(obj):
