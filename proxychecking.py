@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 from aiohttp_socks import ProxyType, ProxyConnector, ChainProxyConnector
 import sys
+import traceback
 
 import nest_asyncio
 nest_asyncio.apply()
